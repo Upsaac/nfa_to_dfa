@@ -16,51 +16,43 @@ defmodule NfaToDfa do
   end
 
   def determinize(%NfaToDfa{} = nfa) do
-    do_determinize(nfa.start_state,nfa,[[nfa.start_state]],[])
-  end
+  estado_inicial_dfa = [nfa.start_state] |> Enum.sort()
 
-  defp do_determinize([], nfa, dfa_acumulado, [siguiente_estado|estados_pendientes]) do
-    #pl primera letra
-    do_determinize(siguiente_estado,nfa,dfa_acumulado,estados_pendientes)
-  end
-
-  defp do_determinize([current_state|rest], nfa, dfa_acumulado, estados_pendientes, estado_acumulado) do
-
-    add(current_state,nfa,nfa.alphabet,dfa_acumulado,estados_pendientes, estado_acumulado)
-    new_estate = construir_estado(current_state, [])
-  end
-
-  defp add(curr, nfa, alabeto, dfa_acumulado, estados_pendientes) do
-  case alabeto do
-    [] ->
-      1
-    [pl|rest] ->
-     unless nfa.transitions[{curr, pl}]  do
-      add(curr, nfa, rest, dfa_acumulado, estados_pendientes)
-    else
-      destinos = nfa.transitions[{curr, pl}]
-
-    end
-  end
-  end
-
-
-  def construir_estado(estados_pendientes,dfa_acumulado) do
-  case estados_pendientes do
-    [] ->
-      # Ya no hay nada que añadir, devolvemos el resultado final
-      dfa_acumulado
-
-    [actual | resto] ->
-      # 1. Calculamos la transformación para el estado 'actual'
-      nuevo_dfa = añadir_transiciones_al_dfa(actual, dfa_acumulado)
-
-      # 2. Identificamos nuevos estados descubiertos que no hemos visitado
-      nuevos_pendientes = resto ++ descubrir_nuevos_estados(actual)
-
-      # 3. RECURSIÓN: Pasamos el nuevo estado "hacia adelante"
-      construir_estado(nuevos_pendientes, nuevo_dfa)
-  end
+  resolver([estado_inicial_dfa], MapSet.new([estado_inicial_dfa]), %{}, nfa)
 end
+
+defp obtener_destino(conjunto_actual, simbolo, nfa) do
+  conjunto_actual
+  |> Enum.flat_map(fn estado -> Map.get(nfa.transitions, {estado, simbolo}, []) end)
+  |> Enum.uniq()
+  |> Enum.sort()
+end
+
+
+defp resolver([], _visitados, transiciones_dfa, _nfa), do: transiciones_dfa
+
+defp resolver([actual | resto], visitados, transiciones_dfa, nfa) do
+  # Para el estado 'actual', probamos cada letra del alfabeto
+  {nuevas_transiciones_de_este_estado, nuevos_estados_descubiertos} =
+    Enum.reduce(nfa.alphabet, {%{}, []}, fn simbolo, {acc_trans, acc_nuevos} ->
+      destino = obtener_destino(actual, simbolo, nfa)
+
+      case destino do
+        [] -> {acc_trans, acc_nuevos} # No hay a donde ir
+        _  ->
+          # Guardamos la transición: {[:inicio], "a"} => [:nodo_a, :nodo_b]
+          nueva_t = Map.put(acc_trans, {actual, simbolo}, destino)
+          {Map.merge(acc_trans, nueva_t), [destino | acc_nuevos]}
+      end
+    end)
+
+  # Filtramos los estados que ya vimos para no repetir computo
+  solo_nuevos = nuevos_estados_descubiertos
+                |> Enum.filter(fn e -> !MapSet.member?(visitados, e) end)
+
+  resolver(resto ++ solo_nuevos, MapSet.union(visitados, MapSet.new(solo_nuevos)),
+           Map.merge(transiciones_dfa, nuevas_transiciones_de_este_estado), nfa)
+end
+
 
 end
