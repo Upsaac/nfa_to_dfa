@@ -3,14 +3,15 @@ defmodule NfaToDfa do
 
   def nfa_example do
     %NfaToDfa{
-      states: [:inicio, :nodo_a, :nodo_b, :fin],
-      alphabet: ["a", "b", "c"],
-      start_state: :inicio,
-      final_states: [:fin],
+      states: [:n0, :n1, :n2, :n3],
+      alphabet: ["a", "b"],
+      start_state: :n0,
+      final_states: [:n3],
       transitions: %{
-        {:inicio, "a"} => [:nodo_a, :nodo_b],
-        {:inicio, "b"} => [:nodo_b],
-        {:nodo_a, "c"} => [:fin]
+        {:n0, "a"} => [:n0, :n1],
+        {:n0, "b"} => [:n0],
+        {:n1, "b"} => [:n2],
+        {:n2, "b"} => [:n3],
       }
     }
   end
