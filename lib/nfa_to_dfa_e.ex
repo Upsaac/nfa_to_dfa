@@ -43,7 +43,8 @@ defmodule NfaToDfaE do
     conjunto_actual
     |> Enum.flat_map(fn estado -> Map.get(nfa.transitions, {estado, simbolo}, []) end)
     |> Enum.uniq()
-
+    #falta calcular epsilon tras cada movimiento
+    |> (&e_closure(nfa, &1)).()
   end
 
   defp resolver([], _visitados, transiciones_dfa, _nfa), do: transiciones_dfa
