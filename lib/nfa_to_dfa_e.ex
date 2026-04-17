@@ -17,6 +17,53 @@ defmodule NfaToDfaE do
     }
   end
 
+  def nfa_example_con_epsilon_2 do
+    %NfaToDfaE{
+      states: [:n0, :n1, :n2, :n3, :n4, :n5, :n6, :n7, :n8, :n9, :n10],
+      alphabet: ["a", "b"],
+      start_state: :n0,
+      final_states: [:n10],
+      transitions: %{
+        # Ejemplo: desde n0 con epsilon vas a n1
+        {:n0, :epsilon} => [:n1, :n7],
+        {:n1, :epsilon} => [:n2,:n3],
+        {:n2, "a"} => [:n4],
+        {:n3, "b"} => [:n5],
+        {:n4, :epsilon} => [:n6],
+        {:n5, :epsilon} => [:n6],
+        {:n6, :epsilon} => [:n1,:n7],
+        {:n7, "a"} => [:n8],
+        {:n8, "b"} => [:n9],
+        {:n9, "b"} => [:n10]
+      }
+    }
+  end
+
+  def graphviz(_transiciones_dfa) do
+    """
+    digraph G {
+    // Configuración para que se vea como un autómata
+    rankdir=LR;
+    node [shape = circle];
+
+    #{
+
+    }
+    // Transición 1: {[:n0, :n1], "a"} => [:n0, :n1]
+    "{n0, n1}" -> "{n0, n1}" [label = "a"];
+
+    // Transición 2: {[:n0, :n1], "b"} => [:n2, :n3]
+    "{n0, n1}" -> "{n2, n3}" [label = "b"];
+    }
+    """
+
+  end
+
+  def prune()  do
+    1+1
+  end
+
+
   # --- FUNCIÓN E-CLOSURE ---
   def e_closure(%NfaToDfaE{} = nfa, states) when is_list(states) do
     do_e_closure(states, MapSet.new(states), nfa)
@@ -43,7 +90,7 @@ defmodule NfaToDfaE do
     conjunto_actual
     |> Enum.flat_map(fn estado -> Map.get(nfa.transitions, {estado, simbolo}, []) end)
     |> Enum.uniq()
-    #falta calcular epsilon tras cada movimiento
+    #falta calcular epsilon tras cada movimientoN
     |> (&e_closure(nfa, &1)).()
   end
 
