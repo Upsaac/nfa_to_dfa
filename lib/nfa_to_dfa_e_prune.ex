@@ -39,9 +39,24 @@ defmodule NfaToDfaEPrune do
     }
   end
   # Codigo que implementación de prune
+  def e_determinize(%NfaToDfaEPrune{} = nfa){
+    nfa
+    |> prune()       # Aplicamos prune antes de Cortamos los callejones sin salida
+    |> determinize()
+  }
+
   def prune()  do
-    1+1
+    #qué estados realmente pueden llegar al final
+    estados_vivos = buscar_vivos(nfa.final_states, MapSet.new(nfa.final_states), nfa)
+
+
   end
+
+  defp buscar_vivos([], visitados, _nfa), do: visitados
+  defp buscar_vivos([actual | resto], visitados, nfa) do
+
+  end
+
 
 
   # --- FUNCIÓN E-CLOSURE ---
