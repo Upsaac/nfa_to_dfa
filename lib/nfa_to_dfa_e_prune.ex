@@ -24,7 +24,7 @@ defmodule NfaToDfaEPrune do
       start_state: :n0,
       final_states: [:n10],
       transitions: %{
-        # Ejemplo: desde n0 con epsilon vas a n1
+
         {:n0, :epsilon} => [:n1, :n7],
         {:n1, :epsilon} => [:n2,:n3],
         {:n2, "a"} => [:n4],
@@ -70,7 +70,6 @@ defmodule NfaToDfaEPrune do
     conjunto_actual
     |> Enum.flat_map(fn estado -> Map.get(nfa.transitions, {estado, simbolo}, []) end)
     |> Enum.uniq()
-    #falta calcular epsilon tras cada movimientoN
     |> (&e_closure(nfa, &1)).()
   end
 
