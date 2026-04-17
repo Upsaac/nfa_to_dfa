@@ -39,30 +39,6 @@ defmodule NfaToDfaE do
     }
   end
 
-  def graphviz(_transiciones_dfa) do
-    """
-    digraph G {
-    // Configuración para que se vea como un autómata
-    rankdir=LR;
-    node [shape = circle];
-
-    #{
-
-    }
-    // Transición 1: {[:n0, :n1], "a"} => [:n0, :n1]
-    "{n0, n1}" -> "{n0, n1}" [label = "a"];
-
-    // Transición 2: {[:n0, :n1], "b"} => [:n2, :n3]
-    "{n0, n1}" -> "{n2, n3}" [label = "b"];
-    }
-    """
-
-  end
-
-  def prune()  do
-    1+1
-  end
-
 
   # --- FUNCIÓN E-CLOSURE ---
   def e_closure(%NfaToDfaE{} = nfa, states) when is_list(states) do

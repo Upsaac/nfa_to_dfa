@@ -3,7 +3,7 @@ defmodule NfaToDfaEPrune do
 
   def nfa_example_con_epsilon do
     %NfaToDfaEPrune{
-      states: [:n0, :n1, :n2, :n3],
+      states: [:n0, :n1, :n2, :n3, :n4],
       alphabet: ["a", "b"],
       start_state: :n0,
       final_states: [:n3],
@@ -11,6 +11,7 @@ defmodule NfaToDfaEPrune do
         # Ejemplo: desde n0 con epsilon vas a n1
         {:n0, :epsilon} => [:n1],
         {:n0, "a"} => [:n0],
+        {:n0, "b"}=>[:n4],
         {:n1, "b"} => [:n2],
         {:n2, :epsilon} => [:n3]
       }
@@ -39,22 +40,50 @@ defmodule NfaToDfaEPrune do
     }
   end
   # Codigo que implementación de prune
-  def e_determinize(%NfaToDfaEPrune{} = nfa){
+  def e_determinize(%NfaToDfaEPrune{} = nfa) do
     nfa
-    |> prune()       # Aplicamos prune antes de Cortamos los callejones sin salida
+    |> prune()       # Aplicamos prune antes determinize para quitar estados muertos y caminos sin salida
     |> determinize()
-  }
+  end
 
-  def prune()  do
+  def prune(%NfaToDfaEPrune{} = nfa)  do
     #qué estados realmente pueden llegar al final
     estados_vivos = buscar_vivos(nfa.final_states, MapSet.new(nfa.final_states), nfa)
 
+    #prune la lista de estados del NFA
+    estados_limpios = Enum.filter(nfa.states, fn s -> MapSet.member?(estados_vivos, s) end)
+
+    # prune las transiciones
+    transiciones_limpias =
+      nfa.transitions
+      |> Enum.map(fn {{origen, simbolo}, destinos} ->
+        # eliminamos de las listas de destino aquellos que no llevan a ningun lado
+        destinos_vivos = Enum.filter(destinos, fn d -> MapSet.member?(estados_vivos, d) end)
+        {{origen, simbolo}, destinos_vivos}
+      end)
+      # filtramos transiciones enteras si el origen está vacio o si se quedó sin destinos
+      |> Enum.filter(fn {{origen, _simbolo}, destinos} ->
+        MapSet.member?(estados_vivos, origen) and destinos != []
+      end)
+      |> Enum.into(%{})
+
+    # Retornamos la estructura actualizada
+    %NfaToDfaEPrune{nfa | states: estados_limpios, transitions: transiciones_limpias}
 
   end
 
   defp buscar_vivos([], visitados, _nfa), do: visitados
   defp buscar_vivos([actual | resto], visitados, nfa) do
+    # Identificamos qué estados tienen al estado 'actual' en su lista de destinos
+    predecesores =
+    nfa.transitions
+      |> Enum.filter(fn {_origen_y_simbolo, destinos} -> actual in destinos end)
+      |> Enum.map(fn {{origen, _simbolo}, _destinos} -> origen end)
+      |> Enum.reject(fn origen -> MapSet.member?(visitados, origen) end)
+      |> Enum.uniq()
 
+    nuevos_visitados = MapSet.union(visitados, MapSet.new(predecesores))
+    buscar_vivos(predecesores ++ resto, nuevos_visitados, nfa)
   end
 
 
